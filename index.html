@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css">
+    <title>La Ruleta de la Pizarra</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/zarocknz/javascript-winwheel@2.8.0/Winwheel.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #111;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+
+        #wheel-container {
+            position: relative;
+        }
+
+        #canvas {
+            margin: 20px auto;
+            display: block;
+            background: #fff;
+            border-radius: 50%;
+            border: 4px solid #ccc;
+        }
+
+        #patito {
+            position: absolute;
+            top: 37%;
+            left: 35%;
+            height: 10em;
+        }
+
+        input,
+        button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #namesList {
+            margin: 10px auto;
+            max-width: 400px;
+        }
+
+        .name-tag {
+            display: inline-block;
+            background: #444;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 3px;
+            cursor: pointer;
+        }
+
+        .name-tag:hover {
+            background: #ff4444;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎡 Quién pasará al frente? 🎉</h1>
+    <h1>🦆 El Pato Golozón lo decidirá 🦆</h1>
+
+    <input id="nameInput" placeholder="Escribe un nombre..." />
+    <button onclick="addName()">Agregar</button>
+    <button onclick="resetNames()">Limpiar todo</button>
+
+    <div id="namesList"></div>
+
+    <audio id="spinSound" src="girar.mp3"></audio>
+
+    <div id="wheel-container">
+        <div id="pointer"></div>
+        <canvas id="canvas" width="500" height="500"></canvas>
+        <img onclick="spinWheel()" id="patito" src="img/patito_goloson.png" alt="">
+    </div>
+
+    <div id="winnerMessage">
+        <h1>
+                    🎉 El/La ganador/a es: <span id="winnerName"></span> 🎉
+        </h1>
+
+    </div>
+
+    <br>
+
+
+    <script>
+        let names = ["Axel.L", "Axel.S", "Blanca", "Adrian", "Maria", "Alí", "Susana", "Nino", "Liz", "Sebas", "Dominguito", "Karol", "Ruben", "Juan Carlos"];
+        let wheel;
+
+        function drawWheel() {
+            if (names.length === 0) return;
+            const segments = names.map(name => ({
+                fillStyle: getRandomColor(),
+                text: name
+            }));
+
+            wheel = new Winwheel({
+                canvasId: 'canvas',
+                numSegments: segments.length,
+                outerRadius: 230,
+                segments: segments,
+                animation: {
+                    type: 'spinToStop',
+                    duration: 6,
+                    spins: 8,
+                    easing: 'easeOut',
+                    callbackFinished: announceWinner
+                },
+                textFontSize: 20,
+                textOrientation: 'horizontal',
+                textAlignment: 'center',
+                lineWidth: 1,
+                strokeStyle: '#000'
+            });
+        }
+
+        function spinWheel() {
+            if (!wheel || names.length === 0) {
+                alert("Agrega al menos un nombre para girar la ruleta.");
+                return;
+            }
+            // Reproducir el sonido de giro
+            const spinSound = document.getElementById("spinSound");
+            spinSound.play();  // Reproducir el sonido
+            wheel.stopAnimation(false);
+            wheel.rotationAngle = 0;
+            wheel.draw();
+            wheel.startAnimation();
+        }
+
+        function announceWinner(indicatedSegment) {
+            // Obtener el nombre del ganador
+            const name = indicatedSegment.text;
+
+            // Mostrar el nombre en el letrero
+            const winnerMessage = document.getElementById("winnerMessage");
+            const winnerName = document.getElementById("winnerName");
+
+            winnerName.textContent = name;
+            winnerMessage.style.display = "block";  // Hacer visible el letrero
+
+            // Lanzar confeti
+            launchConfetti();
+        }
+
+        function launchConfetti() {
+            const duration = 2000;
+            const end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 }
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 }
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            })();
+        }
+
+        function addName() {
+            const input = document.getElementById("nameInput");
+            const newName = input.value.trim();
+            if (newName && !names.includes(newName)) {
+                names.push(newName);
+                input.value = "";
+                updateNamesList();
+                drawWheel();
+            }
+        }
+
+        function removeName(name) {
+            names = names.filter(n => n !== name);
+            updateNamesList();
+            drawWheel();
+        }
+
+        function updateNamesList() {
+            const container = document.getElementById("namesList");
+            container.innerHTML = "";
+            names.forEach(name => {
+                const tag = document.createElement("span");
+                tag.className = "name-tag";
+                tag.textContent = name;
+                tag.onclick = () => removeName(name);
+                container.appendChild(tag);
+            });
+        }
+
+        function resetNames() {
+            names = [];
+            updateNamesList();
+            const ctx = document.getElementById("canvas").getContext("2d");
+            ctx.clearRect(0, 0, 500, 500);
+        }
+
+        function getRandomColor() {
+            const letters = "0123456789ABCDEF";
+            let color = "#";
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Inicializar
+        window.onload = () => {
+            updateNamesList();
+            drawWheel();
+        };
+    </script>
+</body>
+
+</html>
