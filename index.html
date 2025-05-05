@@ -76,6 +76,8 @@
     <div id="namesList"></div>
 
     <audio id="spinSound" src="girar.mp3"></audio>
+    <audio id="tickSound" src="girar.mp3"></audio>
+    <audio id="victorySound" src="victory.mp3" preload="auto"></audio>
 
     <div id="wheel-container">
         <div id="pointer"></div>
@@ -85,7 +87,7 @@
 
     <div id="winnerMessage">
         <h1>
-                    🎉 El/La ganador/a es: <span id="winnerName"></span> 🎉
+            🎉 El/La ganador/a es: <span id="winnerName"></span> 🎉
         </h1>
 
     </div>
@@ -94,6 +96,7 @@
 
 
     <script>
+        let previousSegmentIndex = null;
         let names = ["Axel.L", "Axel.S", "Blanca", "Adrian", "Maria", "Alí", "Susana", "Nino", "Liz", "Sebas", "Dominguito", "Karol", "Ruben", "Juan Carlos"];
         let wheel;
 
@@ -112,9 +115,10 @@
                 animation: {
                     type: 'spinToStop',
                     duration: 6,
-                    spins: 8,
+                    spins: 4,
                     easing: 'easeOut',
-                    callbackFinished: announceWinner
+                    callbackFinished: announceWinner,
+                    callbackAfter: playTickIfSegmentChanged
                 },
                 textFontSize: 20,
                 textOrientation: 'horizontal',
@@ -123,6 +127,8 @@
                 strokeStyle: '#000'
             });
         }
+
+
 
         function spinWheel() {
             if (!wheel || names.length === 0) {
@@ -148,6 +154,11 @@
 
             winnerName.textContent = name;
             winnerMessage.style.display = "block";  // Hacer visible el letrero
+
+            // 🔊 Reproducir sonido de victoria
+            const victorySound = document.getElementById("victorySound");
+            victorySound.currentTime = 0;
+            victorySound.play();
 
             // Lanzar confeti
             launchConfetti();
@@ -227,6 +238,24 @@
             updateNamesList();
             drawWheel();
         };
+
+        function playTickIfSegmentChanged() {
+            const tickSound = document.getElementById('tickSound');
+
+            const currentAngle = wheel.rotationAngle % 360;
+            const totalSegments = wheel.segments.length;
+            const degreesPerSegment = 360 / totalSegments;
+
+            // El puntero está en 0 grados, así que tomamos la posición actual
+            const segmentIndex = Math.floor((360 - currentAngle) / degreesPerSegment) % totalSegments;
+
+            if (segmentIndex !== previousSegmentIndex) {
+                previousSegmentIndex = segmentIndex;
+                tickSound.currentTime = 0;
+                tickSound.play();
+            }
+        }
+
     </script>
 </body>
 
