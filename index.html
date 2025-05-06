@@ -76,7 +76,6 @@
     <div id="namesList"></div>
 
     <audio id="spinSound" src="girar.mp3"></audio>
-    <audio id="tickSound" src="girar.mp3"></audio>
     <audio id="victorySound" src="victory.mp3" preload="auto"></audio>
 
     <div id="wheel-container">
@@ -249,11 +248,6 @@
             // El puntero está en 0 grados, así que tomamos la posición actual
             const segmentIndex = Math.floor((360 - currentAngle) / degreesPerSegment) % totalSegments;
 
-            if (segmentIndex !== previousSegmentIndex) {
-                previousSegmentIndex = segmentIndex;
-                tickSound.currentTime = 0;
-                tickSound.play();
-            }
         }
 
     </script>
